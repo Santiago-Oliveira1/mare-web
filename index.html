@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maré Web Açores</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Maré Web — websites feitos à medida nos Açores, para negócios locais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: oceano escuro no topo (canvas de ondas), secções claras em azul/verde,
+   uma calculadora interativa como peça central, rodapé basalto com coordenadas. */
+:root{
+  --oceano:#0b3a66;        /* azul atlântico profundo */
+  --mar:#1769c4;           /* azul principal */
+  --hortensia:#5b8def;     /* azul hortênsia */
+  --pasto:#2f9e5b;         /* verde pastagem */
+  --musgo:#1f6b45;         /* verde escuro */
+  --espuma:#e8f1fb;        /* azul muito claro */
+  --bg:#f5f9fd;
+  --surface:#ffffff;
+  --fg:#0d2238;
+  --muted:#4c6178;
+  --line:#d3e1ef;
+  --hero-bg:#082c4f;
+  --hero-fg:#eef6ff;
+  --f-display:"Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#071a2d; --surface:#0d2640; --fg:#e6f0fb; --muted:#9db3ca; --line:#1d3d5e;
+    --espuma:#0f2e4d; --mar:#4a93ea; --hortensia:#8bb0ff; --pasto:#4cc07a; --musgo:#7fd9a3;
+    --hero-bg:#041627; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#071a2d; --surface:#0d2640; --fg:#e6f0fb; --muted:#9db3ca; --line:#1d3d5e;
+  --espuma:#0f2e4d; --mar:#4a93ea; --hortensia:#8bb0ff; --pasto:#4cc07a; --musgo:#7fd9a3;
+  --hero-bg:#041627; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--hero-bg)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);line-height:1.12;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.6rem,3.6vw,2.4rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--pasto);outline-offset:3px;border-radius:6px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pasto);font-weight:600}
+section{padding-block:clamp(56px,9vw,104px)}
+.lead{color:var(--muted);max-width:60ch;font-size:1.06rem}
+
+/* NAV */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--hero-bg) 88%,transparent);backdrop-filter:blur(10px);color:var(--hero-fg);border-bottom:1px solid rgba(255,255,255,.08)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:1.05rem;text-decoration:none;color:var(--hero-fg)}
+.logo svg{width:30px;height:30px}
+.nav ul{display:flex;gap:24px;list-style:none;margin:0;padding:0;font-size:.95rem}
+.nav ul a{text-decoration:none;opacity:.8}
+.nav ul a:hover{opacity:1}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 .95rem var(--f-body);padding:12px 20px;border-radius:999px;border:0;cursor:pointer;text-decoration:none;transition:transform .2s,background .2s,box-shadow .2s}
+.btn-green{background:#2f9e5b;color:#fff}
+.btn-green:hover{background:#268a4e;transform:translateY(-2px);box-shadow:0 8px 20px rgba(47,158,91,.35)}
+.btn-ghost{background:transparent;color:var(--hero-fg);border:1.5px solid rgba(238,246,255,.35)}
+.btn-ghost:hover{border-color:var(--hero-fg)}
+@media (max-width:760px){.nav ul{display:none}}
+
+/* HERO */
+.hero{position:relative;background:var(--hero-bg);color:var(--hero-fg);overflow:hidden;padding-block:clamp(64px,10vw,120px) clamp(120px,16vw,190px)}
+.hero canvas{position:absolute;inset:auto 0 0 0;width:100%;height:58%;display:block;pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(2.2rem,6vw,4.4rem);font-weight:800;letter-spacing:-.025em}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#7fb3ff,#5fd696);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.sub{margin-top:22px;max-width:46ch;font-size:1.12rem;color:#bcd3ec}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.hero .eyebrow{color:#7fd9a3;display:block;margin-bottom:18px}
+.coords{font-family:var(--f-mono);font-size:.8rem;color:#8fb0d3;margin-top:28px}
+/* mini browser no hero */
+.mock{background:#0e3a66;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 30px 60px rgba(0,0,0,.35);overflow:hidden;transform:rotate(1.5deg);animation:float 7s ease-in-out infinite}
+.mock .bar{display:flex;gap:6px;padding:10px 12px;background:rgba(255,255,255,.06)}
+.mock .bar i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}
+.mock .bar span{margin-left:10px;font:12px var(--f-mono);color:#9ec0e6}
+.mock .screen{padding:20px;display:grid;gap:12px}
+.mock .blk{border-radius:8px;background:rgba(255,255,255,.08)}
+.mock code{font:12.5px/1.7 var(--f-mono);color:#cfe3ff;display:block;white-space:pre;overflow:hidden}
+.mock code .k{color:#7fd9a3}.mock code .s{color:#ffd58a}.mock code .c{color:#6f8fb3}
+.caret{display:inline-block;width:7px;height:14px;background:#7fd9a3;vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+@keyframes float{50%{transform:rotate(1.5deg) translateY(-10px)}}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.mock{transform:none}}
+
+/* SERVIÇOS */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.svc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;gap:12px;transition:transform .25s,border-color .25s}
+.svc:hover{transform:translateY(-4px);border-color:var(--mar)}
+.svc .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--espuma);color:var(--mar)}
+.svc .ic.g{color:var(--pasto)}
+.svc p{color:var(--muted);font-size:.97rem}
+.svc .tag{margin-top:auto;font:600 .8rem var(--f-mono);color:var(--mar)}
+@media (max-width:860px){.grid3{grid-template-columns:1fr}}
+
+/* CALCULADORA */
+.calc-sec{background:var(--espuma)}
+.calc{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;margin-top:40px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:28px;display:grid;gap:26px;min-width:0}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:12px}
+legend{font-weight:600;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chips label{position:relative}
+.chips input{position:absolute;opacity:0;inset:0}
+.chips span{display:inline-block;padding:10px 16px;border:1.5px solid var(--line);border-radius:999px;cursor:pointer;font-size:.93rem;transition:all .15s;user-select:none}
+.chips input:checked+span{background:var(--mar);border-color:var(--mar);color:#fff}
+.chips input:focus-visible+span{outline:3px solid var(--pasto);outline-offset:2px}
+.range-row{display:flex;justify-content:space-between;font-size:.93rem}
+.range-row b{font-family:var(--f-mono)}
+input[type=range]{width:100%;accent-color:var(--mar)}
+.result{background:var(--hero-bg);color:var(--hero-fg);border-radius:var(--r);padding:28px;display:grid;gap:18px;position:sticky;top:90px;min-width:0}
+.result .price{font:700 clamp(2.4rem,5vw,3.2rem) var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.result .small{font-size:.85rem;color:#9fbcdb}
+.result ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.93rem}
+.result li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed rgba(255,255,255,.14);padding-bottom:8px;font-variant-numeric:tabular-nums}
+.result li span:last-child{font-family:var(--f-mono)}
+.weeks{display:flex;gap:4px}
+.weeks i{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.12);transition:background .3s}
+.weeks i.on{background:#5fd696}
+@media (max-width:860px){.calc{grid-template-columns:1fr}.result{position:static}}
+
+/* PROCESSO */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;position:relative}
+.step{padding:0 20px 0 0;display:grid;gap:10px}
+.step .n{font:800 .9rem var(--f-mono);color:#fff;background:var(--mar);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;position:relative;z-index:1}
+.step:nth-child(even) .n{background:var(--pasto)}
+.steps::before{content:"";position:absolute;top:20px;left:20px;right:20px;height:2px;background:linear-gradient(90deg,var(--mar),var(--pasto))}
+.step p{color:var(--muted);font-size:.95rem}
+@media (max-width:860px){.steps{grid-template-columns:1fr 1fr;gap:32px}.steps::before{display:none}}
+@media (max-width:480px){.steps{grid-template-columns:1fr}}
+
+/* PORTFÓLIO */
+.port{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.work{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.work .thumb{aspect-ratio:16/10;max-width:100%;position:relative;display:grid;place-items:center;overflow:hidden}
+.work .thumb b{font-family:var(--f-display);color:#fff;font-size:1.3rem;text-align:center;padding:0 16px;position:relative;z-index:1;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+.work .thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 120%,rgba(255,255,255,.25),transparent 55%);transition:transform .5s}
+.work:hover .thumb::after{transform:scale(1.4)}
+.work .meta{padding:18px 20px;display:grid;gap:4px}
+.work .meta span{font-size:.88rem;color:var(--muted)}
+.t1{background:linear-gradient(135deg,#0b3a66,#1769c4)}
+.t2{background:linear-gradient(135deg,#1f6b45,#2f9e5b)}
+.t3{background:linear-gradient(135deg,#1769c4,#2f9e5b)}
+@media (max-width:860px){.port{grid-template-columns:1fr}}
+.note{font-size:.85rem;color:var(--muted);margin-top:18px}
+
+/* CONTACTO */
+.contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start}
+form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:28px;min-width:0}
+form label{display:grid;gap:6px;font-size:.9rem;font-weight:600}
+form input,form textarea,form select{font:inherit;font-weight:400;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+form input:focus,form textarea:focus,form select:focus{outline:none;border-color:var(--mar)}
+.ok{background:var(--espuma);border-radius:10px;padding:14px;font-size:.95rem;color:var(--fg)}
+@media (max-width:860px){.contact{grid-template-columns:1fr}}
+
+/* RODAPÉ */
+footer{background:#10161d;color:#a9b8c8;padding-block:44px;font-size:.9rem}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;align-items:center}
+footer .calcada{height:14px;background-image:radial-gradient(circle,#2a333d 3px,transparent 3.5px);background-size:14px 14px;margin-bottom:28px}
+
+/* animação de entrada (a partir de um estado visível) */
+.rise{animation:rise .8s ease both}
+.rise.d1{animation-delay:.1s}.rise.d2{animation-delay:.22s}.rise.d3{animation-delay:.34s}
+@keyframes rise{from{transform:translateY(14px)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Principal">
+  <div class="wrap">
+    <a class="logo" href="#topo">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#1769c4"/><path d="M3 19c3-3 6-3 9 0s6 3 9 0 6-3 8-1v4a13 13 0 0 1-26 0z" fill="#2f9e5b"/><path d="M4 14c3-3 6-3 9 0s6 3 9 0 5-2 7-1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      Maré Web
+    </a>
+    <ul>
+      <li><a href="#servicos">Serviços</a></li>
+      <li><a href="#orcamento">Orçamento</a></li>
+      <li><a href="#processo">Processo</a></li>
+      <li><a href="#trabalhos">Trabalhos</a></li>
+    </ul>
+    <a class="btn btn-green" href="#contacto">Falar connosco</a>
+  </div>
+</nav>
+
+<header class="hero" id="topo">
+  <canvas id="ondas" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow rise">Websites feitos nos Açores</span>
+      <h1 class="rise d1">O seu negócio merece um site à <em>altura do Atlântico</em>.</h1>
+      <p class="sub rise d2">Criamos websites rápidos, bonitos e fáceis de gerir para restaurantes, alojamentos, lojas e empresas de São Miguel e de todo o arquipélago.</p>
+      <div class="ctas rise d3">
+        <a class="btn btn-green" href="#orcamento">Calcular orçamento</a>
+        <a class="btn btn-ghost" href="#trabalhos">Ver trabalhos</a>
+      </div>
+      <p class="coords">37°44′ N · 25°40′ W — Ponta Delgada</p>
+    </div>
+    <div class="mock rise d2" aria-hidden="true">
+      <div class="bar"><i></i><i></i><i></i><span>o-seu-negocio.pt</span></div>
+      <div class="screen">
+        <code id="typed"></code>
+        <div class="blk" style="height:46px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="blk" style="height:60px;background:rgba(95,214,150,.25)"></div><div class="blk" style="height:60px;background:rgba(127,179,255,.25)"></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="servicos">
+  <div class="wrap">
+    <span class="eyebrow">Serviços</span>
+    <h2 style="margin-top:10px">Tudo o que precisa para estar online</h2>
+    <p class="lead" style="margin-top:14px">Do primeiro rascunho ao site publicado, tratamos de tudo. Fala connosco em português, sem jargão técnico.</p>
+    <div class="grid3">
+      <article class="svc">
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+        <h3>Sites de apresentação</h3>
+        <p>Uma montra digital clara para o seu negócio: quem são, o que fazem, onde estão e como contactar.</p>
+        <span class="tag">desde 450 €</span>
+      </article>
+      <article class="svc">
+        <div class="ic g"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-2 9H8L6 3H3"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg></div>
+        <h3>Lojas online</h3>
+        <p>Venda queijos, artesanato ou chá para o continente e para a diáspora, com pagamentos por MB Way e cartão.</p>
+        <span class="tag">desde 1 200 €</span>
+      </article>
+      <article class="svc">
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+        <h3>Reservas e marcações</h3>
+        <p>Ideal para alojamento local, restaurantes e passeios de observação de cetáceos: o cliente reserva sozinho.</p>
+        <span class="tag">desde 800 €</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="orcamento" class="calc-sec">
+  <div class="wrap">
+    <span class="eyebrow">Orçamento em 30 segundos</span>
+    <h2 style="margin-top:10px">Quanto custa o seu site?</h2>
+    <p class="lead" style="margin-top:14px">Escolha as opções e veja uma estimativa na hora. O preço final é sempre confirmado depois de uma conversa.</p>
+    <div class="calc">
+      <form class="panel" id="calcForm" onsubmit="return false">
+        <fieldset>
+          <legend>Tipo de site</legend>
+          <div class="chips">
+            <label><input type="radio" name="tipo" value="apresentacao" id="t-apr" checked><span>Apresentação</span></label>
+            <label><input type="radio" name="tipo" value="loja" id="t-loja"><span>Loja online</span></label>
+            <label><input type="radio" name="tipo" value="reservas" id="t-res"><span>Reservas</span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Número de páginas</legend>
+          <div class="range-row"><span>Início, sobre, contactos…</span><b id="pagOut">5 páginas</b></div>
+          <input type="range" id="paginas" min="1" max="20" value="5" aria-label="Número de páginas">
+        </fieldset>
+        <fieldset>
+          <legend>Extras</legend>
+          <div class="chips">
+            <label><input type="checkbox" id="x-ling" value="idiomas"><span>Inglês + Alemão</span></label>
+            <label><input type="checkbox" id="x-seo" value="seo"><span>Aparecer no Google</span></label>
+            <label><input type="checkbox" id="x-logo" value="logo"><span>Criar logótipo</span></label>
+            <label><input type="checkbox" id="x-fotos" value="fotos"><span>Sessão fotográfica</span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Manutenção mensal</legend>
+          <div class="chips">
+            <label><input type="radio" name="manut" value="0" id="m-0" checked><span>Não, obrigado</span></label>
+            <label><input type="radio" name="manut" value="25" id="m-25"><span>Básica · 25 €/mês</span></label>
+            <label><input type="radio" name="manut" value="45" id="m-45"><span>Completa · 45 €/mês</span></label>
+          </div>
+        </fieldset>
+      </form>
+      <aside class="result" aria-live="polite">
+        <span class="eyebrow" style="color:#7fd9a3">Estimativa</span>
+        <div><div class="price" id="preco">0 €</div><div class="small" id="mensal">pagamento único</div></div>
+        <ul id="linhas"></ul>
+        <div>
+          <div class="small" style="margin-bottom:8px">Prazo estimado: <b id="prazo" style="color:#eef6ff">—</b></div>
+          <div class="weeks" id="semanas"></div>
+        </div>
+        <a class="btn btn-green" href="#contacto" style="justify-content:center">Pedir este orçamento</a>
+        <p class="small">Valores de demonstração, com IVA à taxa dos Açores (16%).</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section id="processo">
+  <div class="wrap">
+    <span class="eyebrow">Como trabalhamos</span>
+    <h2 style="margin-top:10px">Do café à publicação, em quatro passos</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Conversa</h3><p>Encontramo-nos (ou fazemos videochamada) para perceber o seu negócio e os seus clientes.</p></div>
+      <div class="step"><div class="n">2</div><h3>Proposta visual</h3><p>Mostramos o aspeto do site antes de escrever código. Ajusta-se até ficar como quer.</p></div>
+      <div class="step"><div class="n">3</div><h3>Construção</h3><p>Programamos o site, preparado para telemóvel, rápido mesmo com rede fraca.</p></div>
+      <div class="step"><div class="n">4</div><h3>Lançamento</h3><p>Publicamos, ensinamos a atualizar e ficamos disponíveis para o que precisar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="trabalhos" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow">Trabalhos</span>
+    <h2 style="margin-top:10px">Exemplos de projetos</h2>
+    <div class="port">
+      <article class="work"><div class="thumb t1"><b>Baleias à Vista</b></div><div class="meta"><h3>Observação de cetáceos</h3><span>Reservas online em 3 idiomas</span></div></article>
+      <article class="work"><div class="thumb t2"><b>Queijaria da Lomba</b></div><div class="meta"><h3>Loja de queijos</h3><span>Envios para o continente e EUA</span></div></article>
+      <article class="work"><div class="thumb t3"><b>Casa das Hortênsias</b></div><div class="meta"><h3>Alojamento local</h3><span>Galeria, mapa e reservas diretas</span></div></article>
+    </div>
+    <p class="note">Projetos fictícios, criados para esta demonstração.</p>
+  </div>
+</section>
+
+<section id="contacto" class="calc-sec">
+  <div class="wrap contact">
+    <div style="display:grid;gap:14px">
+      <span class="eyebrow">Contacto</span>
+      <h2>Vamos pôr o seu negócio no mapa?</h2>
+      <p class="lead">Conte-nos o que precisa. Respondemos no próprio dia útil.</p>
+      <p style="font-family:var(--f-mono);font-size:.95rem">geral@mareweb.pt<br>Ponta Delgada, São Miguel</p>
+    </div>
+    <form id="contactForm" novalidate>
+      <label for="c-nome">Nome<input id="c-nome" name="nome" required placeholder="Ex.: Maria Medeiros"></label>
+      <label for="c-email">Email<input id="c-email" name="email" type="email" required placeholder="maria@exemplo.pt"></label>
+      <label for="c-ilha">Ilha
+        <select id="c-ilha" name="ilha">
+          <option>São Miguel</option><option>Terceira</option><option>Faial</option><option>Pico</option><option>São Jorge</option><option>Graciosa</option><option>Santa Maria</option><option>Flores</option><option>Corvo</option><option>Fora dos Açores</option>
+        </select>
+      </label>
+      <label for="c-msg">Mensagem<textarea id="c-msg" name="mensagem" rows="4" placeholder="Tenho um restaurante e queria um site com o menu…"></textarea></label>
+      <p class="small" id="c-err" style="color:#c0392b;font-size:.9rem" hidden></p>
+      <button class="btn btn-green" type="submit" style="justify-content:center">Enviar pedido</button>
+      <div class="ok" id="c-ok" hidden></div>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="calcada" aria-hidden="true"></div>
+  <div class="wrap">
+    <span style="font-family:var(--f-display);color:#e6eef7">Maré Web</span>
+    <span>© 2026 · Feito com ondas e café em São Miguel</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- Ondas no hero (canvas) ---- */
+  const cv = document.getElementById('ondas'), ctx = cv.getContext('2d');
+  const layers = [
+    {c:'rgba(23,105,196,.55)', a:18, l:.008, s:.6, y:.35},
+    {c:'rgba(91,141,239,.45)', a:14, l:.012, s:-.9, y:.5},
+    {c:'rgba(47,158,91,.55)',  a:12, l:.010, s:1.1, y:.66},
+    {c:'rgba(31,107,69,.85)',  a:10, l:.015, s:-.7, y:.8}
+  ];
+  let w, h, t = 0;
+  function size(){ const r = devicePixelRatio || 1; w = cv.clientWidth; h = cv.clientHeight; cv.width = w*r; cv.height = h*r; ctx.setTransform(r,0,0,r,0,0); }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    layers.forEach(L=>{
+      ctx.beginPath(); ctx.moveTo(0,h);
+      for(let x=0;x<=w;x+=8){ ctx.lineTo(x, h*L.y + Math.sin(x*L.l + t*L.s)*L.a + Math.sin(x*L.l*2.3 + t*L.s*.7)*L.a*.4); }
+      ctx.lineTo(w,h); ctx.closePath(); ctx.fillStyle = L.c; ctx.fill();
+    });
+    t += .02;
+    if(!reduce) requestAnimationFrame(draw);
+  }
+  size(); addEventListener('resize', ()=>{ size(); if(reduce) draw(); }); draw();
+
+  /* ---- Código a escrever-se no mini browser ---- */
+  const code = [
+    ['<span class="c">// o seu site, feito à medida</span>'],
+    ['<span class="k">const</span> negocio = {'],
+    ['  nome: <span class="s">"Restaurante do Porto"</span>,'],
+    ['  ilha: <span class="s">"São Miguel"</span>,'],
+    ['  online: <span class="k">true</span>'],
+    ['};']
+  ].map(x=>x[0]);
+  const typed = document.getElementById('typed');
+  if(reduce){ typed.innerHTML = code.join('\n'); }
+  else {
+    let line = 0;
+    (function next(){
+      typed.innerHTML = code.slice(0, line+1).join('\n') + '<span class="caret"></span>';
+      line = (line+1) % (code.length+3);
+      setTimeout(next, line===0 ? 400 : 650);
+    })();
+  }
+
+  /* ---- Calculadora de orçamento ---- */
+  const base = {apresentacao:{p:450,s:2,n:'Site de apresentação'}, loja:{p:1200,s:5,n:'Loja online'}, reservas:{p:800,s:4,n:'Sistema de reservas'}};
+  const extras = {idiomas:{p:220,s:1,n:'Inglês + Alemão'}, seo:{p:180,s:0,n:'Otimização Google'}, logo:{p:250,s:1,n:'Logótipo'}, fotos:{p:300,s:1,n:'Sessão fotográfica'}};
+  const eur = v => new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v);
+  const f = document.getElementById('calcForm');
+  const pag = document.getElementById('paginas');
+  let shown = 0;
+  function calc(){
+    const tipo = base[f.tipo.value];
+    const n = +pag.value;
+    document.getElementById('pagOut').textContent = n + (n===1?' página':' páginas');
+    const linhas = [[tipo.n, tipo.p]];
+    let semanas = tipo.s;
+    const extraPag = Math.max(0, n-5) * 40;
+    if(extraPag) linhas.push([`${n-5} páginas extra`, extraPag]);
+    semanas += Math.floor(Math.max(0,n-5)/5);
+    f.querySelectorAll('input[type=checkbox]:checked').forEach(c=>{ const e = extras[c.value]; linhas.push([e.n, e.p]); semanas += e.s; });
+    const sub = linhas.reduce((a,l)=>a+l[1],0);
+    const iva = Math.round(sub*.16);
+    linhas.push(['IVA (16%)', iva]);
+    const total = sub + iva;
+    document.getElementById('linhas').innerHTML = linhas.map(l=>`<li><span>${l[0]}</span><span>${eur(l[1])}</span></li>`).join('');
+    const m = +f.manut.value;
+    document.getElementById('mensal').textContent = m ? `+ ${eur(m)} / mês de manutenção` : 'pagamento único';
+    document.getElementById('prazo').textContent = semanas + (semanas===1?' semana':' semanas');
+    document.getElementById('semanas').innerHTML = Array.from({length:12},(_,i)=>`<i class="${i<semanas?'on':''}"></i>`).join('');
+    animate(total);
+  }
+  function animate(to){
+    const el = document.getElementById('preco');
+    if(reduce){ shown = to; el.textContent = eur(to); return; }
+    const from = shown, t0 = performance.now();
+    (function step(now){
+      const k = Math.min(1,(now-t0)/450), e = 1-Math.pow(1-k,3);
+      shown = Math.round(from + (to-from)*e); el.textContent = eur(shown);
+      if(k<1) requestAnimationFrame(step);
+    })(t0);
+  }
+  f.addEventListener('input', calc); f.addEventListener('change', calc); calc();
+
+  /* ---- Formulário de contacto ---- */
+  const cf = document.getElementById('contactForm');
+  cf.addEventListener('submit', e=>{
+    e.preventDefault();
+    const err = document.getElementById('c-err'), ok = document.getElementById('c-ok');
+    const nome = cf.nome.value.trim(), email = cf.email.value.trim();
+    if(!nome || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      err.textContent = 'Preencha o nome e um email válido (ex.: nome@exemplo.pt).'; err.hidden = false; ok.hidden = true; return;
+    }
+    err.hidden = true;
+    ok.textContent = `Obrigado, ${nome.split(' ')[0]}! Isto é uma demonstração: num site real, o pedido de ${cf.ilha.value} seria enviado para o email da empresa.`;
+    ok.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
